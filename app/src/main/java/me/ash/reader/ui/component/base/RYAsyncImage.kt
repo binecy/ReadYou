@@ -1,5 +1,6 @@
 package me.ash.reader.ui.component.base
 
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,10 +40,18 @@ fun RYAsyncImage(
             model =
                 ImageRequest.Builder(LocalContext.current)
                     .apply {
+                        val url = data.toString()
                         val domain = data.toString().extractDomain()
-                        if (data.toString().extractDomain() != null) {
+                        // 解决bilibili，bohaishibei图片加载失败问题
+                        // todo 怎么是代码通用
+                        if (url.contains("hdslb.com") || url.contains("bilibili.com")) {
+                            addHeader("Referer", "https://www.bilibili.com/")
+                        } else if (url.contains("bohaishibei.com")) {
+                            addHeader("Referer", "https://www.bohaishibei.com/")
+                        } else if (domain != null) {
                             addHeader("Referer", domain!!)
                         }
+                        addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                     }
                     .data(data = data)
                     .apply {
@@ -53,6 +62,20 @@ fun RYAsyncImage(
                         precision(precision)
                         size(size)
                     }
+                    .listener(
+//                        onSuccess = { request, result ->
+//                            Log.d("CoilDebug", "✅ 图片加载成功: ${request.data}")
+//                        },
+                        onError = { request, result ->
+                            Log.e("CoilDebug", "❌ 图片地址：${request.data}")
+
+                            // ✅ 这行能打印出真正的失败原因（403 / 网络 / 证书 / 防盗链）
+                            Log.e("CoilDebug", "❌ 失败原因：${result.throwable}")
+
+                            // ✅ 这行打印完整堆栈，定位最准
+                            Log.e("CoilDebug", "❌ 完整错误：", result.throwable)
+                        }
+                    )
                     .build()
         )
     Image(

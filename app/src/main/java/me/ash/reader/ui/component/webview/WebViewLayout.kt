@@ -3,7 +3,10 @@ package me.ash.reader.ui.component.webview
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
+import android.view.View
+import android.view.ViewGroup
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import me.ash.reader.infrastructure.preference.ReadingFontsPreference
 
@@ -55,6 +58,55 @@ object WebViewLayout {
                 setSupportZoom(false)
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                     isAlgorithmicDarkeningAllowed = true
+                }
+            }
+
+            // 支持b站视频最大化播放
+            webChromeClient = object : WebChromeClient() {
+                private var fullscreenView: View? = null
+                private var fullscreenContainer:  ViewGroup? = null
+                private var customViewCallback: CustomViewCallback? = null
+                private var originalOrientation = 0
+
+                override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                    if (fullscreenView != null) {
+                        callback.onCustomViewHidden()
+                        return
+                    }
+
+                    val activity = context as android.app.Activity
+                    fullscreenView = view
+                    customViewCallback = callback
+                    originalOrientation = activity.requestedOrientation
+
+                    // 找到界面最顶层容器
+                    fullscreenContainer = activity.window.decorView as ViewGroup
+                    fullscreenContainer?.addView(
+                        view,
+                        ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                    )
+
+                    // 强制横屏 + 全屏
+//                    activity.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                    activity.window.addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                }
+
+                override fun onHideCustomView() {
+                    val activity = context as android.app.Activity
+
+                    // 从顶层移除全屏View，不破坏原有布局
+                    fullscreenContainer?.removeView(fullscreenView)
+                    fullscreenView = null
+
+                    // 恢复方向 + 退出全屏
+//                    activity.requestedOrientation = originalOrientation
+                    activity.window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
+
+                    customViewCallback?.onCustomViewHidden()
+                    customViewCallback = null
                 }
             }
         }

@@ -91,7 +91,7 @@
     <string name="in_coding">还在写</string>
     <string name="coming_soon">正在路上</string>
     <string name="accounts">账户</string>
-    <string name="accounts_desc">本地、服务、自托管</string>
+    <string name="accounts_desc">本地、服务、自托管、同步</string>
     <string name="color_and_style">颜色和样式</string>
     <string name="color_and_style_desc">主题、色调样式、字体大小</string>
     <string name="interaction">使用偏好</string>
@@ -215,6 +215,9 @@
     <string name="for_1_month">1 个月</string>
     <string name="local">本地</string>
     <string name="local_desc">在这台设备上</string>
+    <string name="sync">同步</string>
+    <string name="webdav">WebDav</string>
+    <string name="webdav_desc">通过WebDav同步多台设备</string>
     <string name="services">服务</string>
     <string name="self_hosted">自托管</string>
     <string name="fever_desc">已过时，不推荐。</string>

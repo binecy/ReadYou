@@ -75,6 +75,7 @@ constructor(
     suspend fun isNoAccount(): Boolean = accountDao.queryAll().isEmpty()
 
     suspend fun addAccount(account: Account): Account {
+        // 新增账号
         val id = accountDao.insert(account).toInt()
         return account.copy(id = id).also {
             when (it.type) {

@@ -47,6 +47,14 @@ class AdditionViewModel @Inject constructor(
         }
     }
 
+    fun showAddWebDavRssAccountDialog() {
+        _additionUiState.update {
+            it.copy(
+                addWebDavRSSAccountDialogVisible = true,
+            )
+        }
+    }
+
     fun hideAddFeverAccountDialog() {
         _additionUiState.update {
             it.copy(
@@ -86,6 +94,14 @@ class AdditionViewModel @Inject constructor(
             )
         }
     }
+
+    fun hideAddWebDavRSSAccountDialog() {
+        _additionUiState.update {
+            it.copy(
+                addWebDavRSSAccountDialogVisible = false,
+            )
+        }
+    }
 }
 
 data class AdditionUiState(
@@ -93,4 +109,5 @@ data class AdditionUiState(
     val addFeverAccountDialogVisible: Boolean = false,
     val addGoogleReaderAccountDialogVisible: Boolean = false,
     val addFreshRSSAccountDialogVisible: Boolean = false,
+    val addWebDavRSSAccountDialogVisible: Boolean = false,
 )

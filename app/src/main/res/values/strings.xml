@@ -245,12 +245,15 @@
     <string name="for_2_weeks">2 weeks</string>
     <string name="for_1_month">1 month</string>
     <string name="local">Local</string>
+    <string name="sync">sync</string>
     <string name="fever" translatable="false">Fever</string>
     <string name="google_reader" translatable="false">Google Reader</string>
     <string name="fresh_rss" translatable="false">FreshRSS</string>
     <string name="feedly" translatable="false">Feedly</string>
     <string name="inoreader" translatable="false">Inoreader</string>
     <string name="local_desc">On this device</string>
+    <string name="webdav">WebDav</string>
+    <string name="webdav_desc">Synchronize multiple devices via WebDAV</string>
     <string name="services">Services</string>
     <string name="feedly_desc" translatable="false">feedly.com</string>
     <string name="inoreader_desc" translatable="false">inoreader.com</string>
@@ -261,7 +264,7 @@
     <string name="more">More</string>
     <string name="add_accounts">Add accounts</string>
     <string name="list">List</string>
-    <string name="add_accounts_desc">Local, services, self-hosted</string>
+    <string name="add_accounts_desc">Local, services, self-hosted, sync</string>
     <string name="display">Display</string>
     <string name="synchronous">Syncing</string>
     <string name="sync_interval">Sync</string>

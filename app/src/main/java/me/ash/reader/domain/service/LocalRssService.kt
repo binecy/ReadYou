@@ -28,7 +28,7 @@ import timber.log.Timber
 
 private const val TAG = "LocalRssService"
 
-class LocalRssService
+open class LocalRssService
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
@@ -60,6 +60,7 @@ constructor(
         feedId: String?,
         groupId: String?
     ): ListenableWorker.Result = supervisorScope {
+        // 下拉更新文章列表
         return@supervisorScope runCatching {
             val preTime = System.currentTimeMillis()
             val preDate = Date(preTime)
@@ -115,6 +116,7 @@ constructor(
     }
 
     private suspend fun syncFeed(feed: Feed, preDate: Date = Date()): FeedWithArticle {
+        // 查询xml
         val articles = rssHelper.queryRssXml(feed, "", preDate)
         if (feed.icon == null) {
             val iconLink = rssHelper.queryRssIconLink(feed.url)

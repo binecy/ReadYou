@@ -1,6 +1,5 @@
 package me.ash.reader.ui.page.settings.accounts
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -117,6 +116,22 @@ fun AddAccountsPage(
                     Spacer(modifier = Modifier.height(24.dp))
                 }
                 item {
+                    // 新增WebDav选项展示
+                    Subtitle(
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                        text = stringResource(R.string.sync),
+                    )
+                    SettingItem(
+                        title = stringResource(R.string.webdav),
+                        desc = stringResource(R.string.webdav_desc),
+                        icon = Icons.Rounded.RssFeed,
+                        onClick = {
+                            additionViewModel.showAddWebDavRssAccountDialog()
+                        },
+                    ) {}
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+                item {
                     Spacer(modifier = Modifier.height(24.dp))
                     Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
                 }
@@ -128,6 +143,7 @@ fun AddAccountsPage(
     AddFeverAccountDialog(onBack, navigateToAccountDetails)
     AddGoogleReaderAccountDialog(onBack, navigateToAccountDetails)
     AddFreshRSSAccountDialog(onBack, navigateToAccountDetails)
+    AddWebDavRssAccountDialog(onBack, navigateToAccountDetails)
 }
 
 @Preview

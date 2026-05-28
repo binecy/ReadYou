@@ -16,6 +16,7 @@ constructor(
     @ApplicationScope private val coroutineScope: CoroutineScope,
     private val accountService: AccountService,
     private val localRssService: LocalRssService,
+    private val webDavRssService: WebDavRssService,
     private val feverRssService: FeverRssService,
     private val googleReaderRssService: GoogleReaderRssService,
 ) {
@@ -40,6 +41,7 @@ constructor(
             AccountType.FreshRSS.id -> googleReaderRssService
             AccountType.Inoreader.id -> localRssService
             AccountType.Feedly.id -> localRssService
+            AccountType.WebDav.id -> webDavRssService
             else -> localRssService
         }
 }

@@ -79,7 +79,7 @@ constructor(
         val id = accountDao.insert(account).toInt()
         return account.copy(id = id).also {
             when (it.type) {
-                AccountType.Local -> {
+                AccountType.Local,AccountType.WebDav -> {
                     groupDao.insert(
                         Group(
                             id = it.id!!.getDefaultGroupId(),

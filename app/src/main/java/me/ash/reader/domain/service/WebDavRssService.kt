@@ -1,6 +1,7 @@
 package me.ash.reader.domain.service
 
 import android.content.Context
+import android.util.Base64
 import android.util.Log
 import androidx.work.ListenableWorker
 import androidx.work.WorkManager
@@ -27,6 +28,7 @@ import me.ash.reader.infrastructure.android.NotificationHelper
 import me.ash.reader.infrastructure.di.DefaultDispatcher
 import me.ash.reader.infrastructure.di.IODispatcher
 import me.ash.reader.infrastructure.rss.RssHelper
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.ByteString.Companion.encode
 import timber.log.Timber
@@ -61,12 +63,32 @@ constructor(
         syncLogger
     )  {
     override suspend fun validCredentials(account: Account): Boolean {
-        WebDavSecurityKey(account.securityKey).run{
+        return WebDavSecurityKey(account.securityKey).run{
             Log.i("WebDavRssService", "serverUrl:"+serverUrl)
             Log.i("WebDavRssService", "username:"+username)
             Log.i("WebDavRssService", "password:"+password)
-        }
-        return true
 
+            if (serverUrl == null) {
+                return false
+            }
+            try {
+                val webDavPath = serverUrl + "/ReadYou/"
+                val request = Request.Builder()
+                    .url(webDavPath)
+                    .method("MKCOL", null) // 核心：MKCOL 建目录
+                    .addHeader("Authorization", basicAuth(username, password))
+                    .build()
+                val resp = OkHttpClient().newCall(request).execute()
+                resp.code == 201 || resp.code == 405
+            } catch (e: Exception) {
+                Log.e("WebDavRssService","create path err", e)
+                false
+            }
+        }
+    }
+
+    private fun basicAuth(username:String?, password:String?): String {
+        val auth = "$username:$password"
+        return "Basic " + Base64.encodeToString(auth.toByteArray(), Base64.NO_WRAP)
     }
 }

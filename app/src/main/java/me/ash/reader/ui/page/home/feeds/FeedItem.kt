@@ -85,6 +85,7 @@ private fun FeedItemImpl(
                 )
             }
             if (feed.important != 0) {
+                // 文章数量
                 Badge(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     contentColor = MaterialTheme.colorScheme.outline,

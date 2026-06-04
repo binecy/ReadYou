@@ -33,6 +33,7 @@ fun LazyListScope.ArticleList(
     // https://issuetracker.google.com/issues/193785330
     // FIXME: Using sticky header with paging-compose need to iterate through the entire list
     //  to figure out where to add sticky headers, which significantly impacts the performance
+    // 加载文章列表
     if (!isShowStickyHeader) {
         items(
             count = pagingItems.itemCount,

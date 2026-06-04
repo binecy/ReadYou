@@ -217,6 +217,14 @@ fun FeedsPage(
                             subscribeViewModel.showDrawer()
                         }
                     }
+                    // 实现历史记录的功能
+//                    FeedbackIconButton(
+//                        imageVector = Icons.Rounded.History,
+//                        contentDescription = stringResource(R.string.subscribe),
+//                        tint = MaterialTheme.colorScheme.onSurface,
+//                    ) {
+//                      todo
+//                    }
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
@@ -302,6 +310,7 @@ fun FeedsPage(
                             }
 
                             feeds.forEachIndexed { index, feed ->
+                                // 处理每个信息流
                                 FeedItem(
                                     feed = feed,
                                     isLastItem = { index == feeds.lastIndex },

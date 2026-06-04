@@ -369,6 +369,7 @@ constructor(
     }
 
     fun updateReadStatus(isUnread: Boolean) {
+        // 文章页面点击已读、未读
         readingUiState.value.articleWithFeed?.let {
             diffMapHolder.updateDiff(it, isUnread = isUnread)
         }
@@ -378,6 +379,7 @@ constructor(
     }
 
     fun updateStarredStatus(isStarred: Boolean) {
+        // 文章页面点击收藏
         applicationScope.launch(ioDispatcher) {
             _readingUiState.update { it.copy(isStarred = isStarred) }
             currentArticle?.let {

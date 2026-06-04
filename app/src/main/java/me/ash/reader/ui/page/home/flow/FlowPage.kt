@@ -665,6 +665,7 @@ fun FlowPage(
                                     .drawVerticalScrollIndicator(listState),
                             state = listState,
                         ) {
+                            // 文章列表展示区域
                             ArticleList(
                                 pagingItems = pagingItems,
                                 diffMap = viewModel.diffMapHolder.diffMap,

@@ -1,6 +1,7 @@
 package me.ash.reader.domain.data
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshotFlow
 import com.google.gson.Gson
@@ -198,9 +199,12 @@ class DiffMapHolder @Inject constructor(
     }
 
     fun commitDiffsToDb() {
+        // 存储已读，未读到DB，初始化执行一次，每次同步文章列表都执行。
+        Log.i("DiffMapHolder", "commitDiffsToDb")
         applicationScope.launch(ioDispatcher) {
             val markAsReadArticles = diffMap.filter { !it.value.isUnread }.map { it.key }.toSet()
             val markAsUnreadArticles = diffMap.filter { it.value.isUnread }.map { it.key }.toSet()
+            // 存储到DB后，清理diffMap，文件
             clearDiffs()
             rssService.get().batchMarkAsRead(articleIds = markAsReadArticles, isUnread = false)
             rssService.get().batchMarkAsRead(articleIds = markAsUnreadArticles, isUnread = true)
@@ -208,8 +212,12 @@ class DiffMapHolder @Inject constructor(
     }
 
     private fun writeDiffsToCache() {
+        // 存储已读，未读到文件
         applicationScope.launch(ioDispatcher) {
             try {
+                // 所有变化都放到这里吗？
+                Log.i("DiffMapHolder", "writeDiffsToCache size:" + diffMap.size)
+
                 val tmpJson = gson.toJson(diffMap)
                 userCacheDir.mkdirs()
                 cacheFile.createNewFile()
@@ -223,7 +231,8 @@ class DiffMapHolder @Inject constructor(
     }
 
     private suspend fun syncDiffsWithRemote(diffs: Map<String, Diff>) {
-        if (!shouldSyncWithRemote) return
+        // 存储已读，未读到远程
+         if (!shouldSyncWithRemote) return
         if (diffs.isEmpty()) return
         val toBeSync = diffs
         val markAsReadArticles =
@@ -255,6 +264,7 @@ class DiffMapHolder @Inject constructor(
     }
 
     private fun commitDiffsFromCache() {
+        // 从文件里面读取已读/未读数据
         applicationScope.launch(ioDispatcher) {
             if (cacheFile.exists() && cacheFile.canRead()) {
                 val tmpJson = cacheFile.readText()
@@ -266,6 +276,7 @@ class DiffMapHolder @Inject constructor(
                     diffMap.clear()
                     diffMap.putAll(it)
                 }
+                Log.i("DiffMapHolder", "init diffMap size:" + diffMap.size)
             }
         }.invokeOnCompletion {
             commitDiffsToDb()

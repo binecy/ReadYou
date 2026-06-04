@@ -7,9 +7,11 @@ import androidx.room.Insert
 import androidx.room.MapColumn
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RawQuery
 import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Transaction
 import androidx.room.Update
+import androidx.sqlite.db.SimpleSQLiteQuery
 import kotlinx.coroutines.flow.Flow
 import me.ash.reader.domain.model.article.Article
 import me.ash.reader.domain.model.article.ArticleMeta
@@ -23,7 +25,8 @@ interface ArticleDao {
 
     @Query(
         """
-        UPDATE article SET isStarred = :isStarred 
+        UPDATE article SET isStarred = :isStarred,
+        isStarredUpdateAt = (unixepoch('subsec') * 1000) 
         WHERE accountId = :accountId
         AND id in (:ids)
         """
@@ -36,7 +39,8 @@ interface ArticleDao {
 
     @Query(
         """
-        UPDATE article SET isUnread = :isUnread 
+        UPDATE article SET isUnread = :isUnread,
+         isUnreadUpdateAt = (unixepoch('subsec') * 1000)  
         WHERE accountId = :accountId
         AND id in (:ids)
         """
@@ -321,7 +325,8 @@ interface ArticleDao {
     @Transaction
     @Query(
         """
-        UPDATE article SET isUnread = :isUnread 
+        UPDATE article SET isUnread = :isUnread,
+        isUnreadUpdateAt = (unixepoch('subsec') * 1000)  
         WHERE accountId = :accountId
         AND date < :before
         AND isUnread != :isUnread
@@ -336,7 +341,8 @@ interface ArticleDao {
     @Transaction
     @Query(
         """
-        UPDATE article SET isUnread = :isUnread 
+        UPDATE article SET isUnread = :isUnread,
+        isUnreadUpdateAt = (unixepoch('subsec') * 1000)  
         WHERE feedId IN (
             SELECT id FROM feed 
             WHERE groupId = :groupId
@@ -356,7 +362,8 @@ interface ArticleDao {
     @Transaction
     @Query(
         """
-        UPDATE article SET isUnread = :isUnread 
+        UPDATE article SET isUnread = :isUnread ,
+        isUnreadUpdateAt = (unixepoch('subsec') * 1000)  
         WHERE feedId = :feedId
         AND accountId = :accountId
         AND isUnread != :isUnread
@@ -373,7 +380,8 @@ interface ArticleDao {
     @Transaction
     @Query(
         """
-        UPDATE article SET isUnread = :isUnread 
+        UPDATE article SET isUnread = :isUnread,
+        isUnreadUpdateAt = (unixepoch('subsec') * 1000)  
         WHERE id = :articleId
         AND accountId = :accountId
         """
@@ -386,7 +394,8 @@ interface ArticleDao {
 
     @Query(
         """
-        UPDATE article SET isStarred = :isStarred 
+        UPDATE article SET isStarred = :isStarred ,
+        isStarredUpdateAt = (unixepoch('subsec') * 1000)   
         WHERE id = :articleId
         AND accountId = :accountId
         """
@@ -917,4 +926,44 @@ interface ArticleDao {
 
         return articles.filterNot { existingArticles.containsKey(it.link) }.also { insertList(it) }
     }
+
+    @RawQuery
+    suspend fun rawUpdate(query: SimpleSQLiteQuery): Int
+
+    suspend fun markAsReadAfterUpdateAt(
+        list: List<Pair<String, Long>>,
+        isUnread: Boolean
+    ) {
+        val args = mutableListOf<Any>()
+        val conditions = list.joinToString(" OR ") {
+            args.add(it.first)
+            args.add(it.second)
+            "(id = ? AND (isUnreadUpdateAt < ? or isUnreadUpdateAt is null))"
+        }
+
+        val sql = "UPDATE article SET isUnread = ? WHERE $conditions"
+
+        // 组装参数（先放更新值，再放条件参数）
+        val finalArgs = arrayOfNulls<Any>(args.size + 1)
+        finalArgs[0] = isUnread
+        for (i in args.indices) {
+            finalArgs[i + 1] = args[i]
+        }
+
+        rawUpdate(SimpleSQLiteQuery(sql, finalArgs))
+    }
+
+    @Query(
+        """
+        SELECT DISTINCT id FROM article
+        WHERE accountId = :accountId
+         and isUnread = :isUnread
+        AND isUnreadUpdateAt > (unixepoch('subsec') * 1000) - :beforeMillis
+        """
+    )
+    suspend fun queryArticleIdInUpdateAfter(
+        accountId: Int,
+        isUnread: Boolean,
+        beforeMillis: Long
+    ): List<String>
 }

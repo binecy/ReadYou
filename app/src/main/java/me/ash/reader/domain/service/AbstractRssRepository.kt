@@ -5,6 +5,7 @@ import androidx.paging.PagingSource
 import androidx.work.ListenableWorker
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.rometools.rome.feed.synd.SyndEntry
 import com.rometools.rome.feed.synd.SyndFeed
 import java.util.Date
 import java.util.UUID
@@ -51,6 +52,11 @@ abstract class AbstractRssRepository(
 
     open suspend fun clearAuthorization() {}
 
+    // 支持定制文章id
+    open fun createArticleId(accountId: Int, entry: SyndEntry):String {
+        return accountId.spacerDollar(UUID.randomUUID().toString());
+    }
+
     open suspend fun subscribe(
         feedLink: String,
         searchedFeed: SyndFeed,
@@ -73,7 +79,7 @@ abstract class AbstractRssRepository(
                 isFullContent = isFullContent,
             )
         val articles =
-            searchedFeed.entries.map { rssHelper.buildArticleFromSyndEntry(feed, accountId, it) }
+            searchedFeed.entries.map { rssHelper.buildArticleFromSyndEntry(feed, accountId, it, ::createArticleId) }
         feedDao.insert(feed)
         articleDao.insertList(articles.map { it.copy(feedId = feed.id) })
     }

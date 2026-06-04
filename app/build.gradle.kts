@@ -207,4 +207,9 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.junit.jupiter)
     testImplementation(libs.mockito.kotlin)
+
+    // WebDav
+    implementation("com.github.thegrizzlylabs:sardine-android:0.9") {
+        exclude(group = "xpp3", module = "xpp3") // 注意是 = 号，命名参数
+    }
 }

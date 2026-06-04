@@ -123,7 +123,7 @@ fun AddWebDavRssAccountDialog(
                     onValueChange = { webdavPassword = it },
                     isPassword = true,
                     label = stringResource(R.string.password),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                 )
                 Spacer(modifier = Modifier.height(10.dp))
             }
@@ -143,9 +143,9 @@ fun AddWebDavRssAccountDialog(
                             name = webdavUsername,
                             securityKey =
                                 WebDavSecurityKey(
-                                    serverUrl = webdavServerUrl,
-                                    username = webdavUsername,
-                                    password = webdavPassword
+                                    serverUrl = webdavServerUrl.removeSuffix("/"),
+                                    username = webdavUsername.trim(),
+                                    password = webdavPassword.trim()
                                 ).toString()
                         )
                     ) { account, exception ->

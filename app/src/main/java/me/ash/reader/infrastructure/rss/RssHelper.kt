@@ -121,6 +121,7 @@ constructor(
     suspend fun queryRssXml(
         feed: Feed,
         latestLink: String?,
+        creatorIdHandler: (Int, SyndEntry) -> String,
         preDate: Date = Date(),
     ): List<Article> =
         try {
@@ -141,7 +142,7 @@ constructor(
                     .entries
                     .asSequence()
                     .takeWhile { latestLink == null || latestLink != it.link }
-                    .map { buildArticleFromSyndEntry(feed, accountId, it, preDate) }
+                    .map { buildArticleFromSyndEntry(feed, accountId, it, creatorIdHandler,preDate) }
                     .toList()
             }
         } catch (e: Exception) {
@@ -154,6 +155,7 @@ constructor(
         feed: Feed,
         accountId: Int,
         syndEntry: SyndEntry,
+        creatorIdHandler: (Int, SyndEntry) -> String,
         preDate: Date = Date(),
     ): Article {
         val desc = syndEntry.description?.value
@@ -171,8 +173,10 @@ constructor(
         //                    "desc: ${desc}\n" +
         //                    "content: ${content}\n"
         //        )
+
+        // 构建Article对象
         return Article(
-            id = accountId.spacerDollar(UUID.randomUUID().toString()),
+            id = creatorIdHandler(accountId, syndEntry),
             accountId = accountId,
             feedId = feed.id,
             date =

@@ -65,7 +65,7 @@ constructor(
             val preTime = System.currentTimeMillis()
             val preDate = Date(preTime)
             val currentAccount = accountService.getAccountById(accountId)!!
-            require(currentAccount.type.id == AccountType.Local.id) {
+            require(currentAccount.type.id == AccountType.Local.id || canDoSync()) {
                 "Account type is invalid"
             }
             val semaphore = Semaphore(16)
@@ -81,17 +81,20 @@ constructor(
                 .mapIndexed { _, currentFeed ->
                     async(Dispatchers.IO) {
                         semaphore.withPermit {
+                            // 查询已归档的
                             val archivedArticles =
                                 feedDao
                                     .queryArchivedArticles(currentFeed.id)
                                     .map { it.link }
                                     .toSet()
+                            // 从远程地址同步文章
                             val fetchedFeed = syncFeed(currentFeed, preDate)
                             val fetchedArticles =
                                 fetchedFeed.articles.filterNot {
                                     archivedArticles.contains(it.link)
                                 }
 
+                            // 插入新的文章
                             val newArticles =
                                 articleDao.insertListIfNotExist(
                                     articles = fetchedArticles,
@@ -107,6 +110,9 @@ constructor(
                 }
                 .awaitAll()
 
+            // 更新文章状态
+            syncState(accountId, feedId, groupId);
+
             Timber.tag("RlOG").i("onCompletion: ${System.currentTimeMillis() - preTime}")
             accountService.update(currentAccount.copy(updateAt = Date()))
             ListenableWorker.Result.success()
@@ -115,9 +121,18 @@ constructor(
             .getOrNull() ?: ListenableWorker.Result.retry()
     }
 
+    open suspend fun syncState(accountId: Int,
+                               feedId: String?,
+                               groupId: String?) {
+    }
+
+    open suspend fun canDoSync(): Boolean {
+        return false
+    }
+
     private suspend fun syncFeed(feed: Feed, preDate: Date = Date()): FeedWithArticle {
         // 查询xml
-        val articles = rssHelper.queryRssXml(feed, "", preDate)
+        val articles = rssHelper.queryRssXml(feed, "",::createArticleId, preDate)
         if (feed.icon == null) {
             val iconLink = rssHelper.queryRssIconLink(feed.url)
             if (iconLink != null) {

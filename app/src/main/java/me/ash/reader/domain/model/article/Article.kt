@@ -49,6 +49,10 @@ data class Article(
     var isReadLater: Boolean = false,
     @ColumnInfo
     var updateAt: Date? = null,
+    @ColumnInfo
+    var isUnreadUpdateAt: Date? = null,
+    @ColumnInfo
+    var isStarredUpdateAt: Date? = null,
 ) {
 
     @Ignore

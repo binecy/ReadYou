@@ -1,6 +1,7 @@
 package me.ash.reader.domain.service
 
 import android.content.Context
+import android.util.Log
 import androidx.work.ListenableWorker
 import androidx.work.WorkManager
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -68,47 +69,51 @@ constructor(
             require(currentAccount.type.id == AccountType.Local.id || canDoSync()) {
                 "Account type is invalid"
             }
-            val semaphore = Semaphore(16)
+            try {
+                val semaphore = Semaphore(16)
 
-            val feedsToSync =
-                when {
-                    feedId != null -> listOfNotNull(feedDao.queryById(feedId))
-                    groupId != null -> feedDao.queryByGroupId(accountId, groupId)
-                    else -> feedDao.queryAll(accountId)
-                }
+                val feedsToSync =
+                    when {
+                        feedId != null -> listOfNotNull(feedDao.queryById(feedId))
+                        groupId != null -> feedDao.queryByGroupId(accountId, groupId)
+                        else -> feedDao.queryAll(accountId)
+                    }
 
-            feedsToSync
-                .mapIndexed { _, currentFeed ->
-                    async(Dispatchers.IO) {
-                        semaphore.withPermit {
-                            // 查询已归档的
-                            val archivedArticles =
-                                feedDao
-                                    .queryArchivedArticles(currentFeed.id)
-                                    .map { it.link }
-                                    .toSet()
-                            // 从远程地址同步文章
-                            val fetchedFeed = syncFeed(currentFeed, preDate)
-                            val fetchedArticles =
-                                fetchedFeed.articles.filterNot {
-                                    archivedArticles.contains(it.link)
+                feedsToSync
+                    .mapIndexed { _, currentFeed ->
+                        async(Dispatchers.IO) {
+                            semaphore.withPermit {
+                                // 查询已归档的
+                                val archivedArticles =
+                                    feedDao
+                                        .queryArchivedArticles(currentFeed.id)
+                                        .map { it.link }
+                                        .toSet()
+                                // 从远程地址同步文章
+                                val fetchedFeed = syncFeed(currentFeed, preDate)
+                                val fetchedArticles =
+                                    fetchedFeed.articles.filterNot {
+                                        archivedArticles.contains(it.link)
+                                    }
+
+                                // 插入新的文章
+                                val newArticles =
+                                    articleDao.insertListIfNotExist(
+                                        articles = fetchedArticles,
+                                        feed = currentFeed,
+                                    )
+                                if (currentFeed.isNotification && newArticles.isNotEmpty()) {
+                                    notificationHelper.notify(
+                                        fetchedFeed.copy(articles = newArticles, feed = currentFeed)
+                                    )
                                 }
-
-                            // 插入新的文章
-                            val newArticles =
-                                articleDao.insertListIfNotExist(
-                                    articles = fetchedArticles,
-                                    feed = currentFeed,
-                                )
-                            if (currentFeed.isNotification && newArticles.isNotEmpty()) {
-                                notificationHelper.notify(
-                                    fetchedFeed.copy(articles = newArticles, feed = currentFeed)
-                                )
                             }
                         }
                     }
-                }
-                .awaitAll()
+                    .awaitAll()
+            } catch (e: Exception) {
+                Log.e(TAG, "sync err", e)
+            }
 
             // 更新文章状态
             syncState(accountId, feedId, groupId);

@@ -33,7 +33,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import me.ash.reader.domain.model.article.Article
 import me.ash.reader.infrastructure.di.ApplicationScope
 import me.ash.reader.ui.ext.dataStore
 import java.io.FileWriter
@@ -143,34 +142,7 @@ constructor(
             }
         }
 
-        val handler = getWebDavHandler()
-
-        val lastPutDay = getStoreTime(LAST_PUT_DAY)
-        if (lastPutDay != todayStart) {
-            // 上次PUT与当前时间不是同一天了（跨天了）,把上次缓存的内容再提交一次
-            val lastPutDayFileName = "${androidId}_AM_${lastPutDay}.txt"
-            val lastPutDayFile =  File(context.filesDir, lastPutDayFileName)
-            if (lastPutDayFile.exists()) {
-                try {
-                    handler.put(getWebDavPath(lastPutDayFileName), lastPutDayFile.readBytes(),)
-                } catch (e: Exception) {
-                    Log.e("WebDavRssService","update file err:" + lastPutDayFileName, e)
-                }
-            }
-            updateStoreTime(LAST_PUT_DAY, todayStart)
-        }
-
-        if (current - lastPutTime >= PUT_INTERVAL_MILLIS) {
-            try {
-                handler.put(getWebDavPath(fileName), file.readBytes())
-                lastPutTime = current
-                needPutCount.value = 0
-            } catch (e: Exception) {
-                Log.e("WebDavRssService","update file err:" + fileName, e)
-            }
-        } else {
-            needPutCount.value += androidId.length;
-        }
+        putFile(false, fileName, file, current, todayStart)
         return articleIds
     }
 
@@ -190,6 +162,59 @@ constructor(
         syncReadStatus(recentUpdatedId.toSet(), false)
     }
 
+    override suspend fun markAsStarred(articleId: String, isStarred: Boolean) {
+        super.markAsStarred(articleId, isStarred)
+
+        val (current, hourStart, todayStart) = getCurrentTimeInfo()
+
+        val fileName = "${androidId}_AM_${todayStart}.txt"    // AM = ArticleModify
+        val file = File(context.filesDir, fileName)
+
+
+        val textContent =
+            "${current}_${if (isStarred) "S" else "D"}:${articleId}\n"  // S = Star, D = DeleteStar
+
+        // 每天创建一个文件，追加写入文件中（自动创建文件，不会覆盖）
+        FileWriter(file, true).use {
+            it.write(textContent)
+        }
+
+        putFile(true, fileName, file, current, todayStart)
+    }
+
+    suspend fun putFile(forcePut:Boolean, fileName:String, file: File, current:Long, todayStart:Long) {
+        val handler = getWebDavHandler()
+
+        val lastPutDay = getStoreTime(LAST_PUT_DAY)
+        if (lastPutDay != todayStart) {
+            // 上次PUT与当前时间不是同一天了（跨天了）,把上次缓存的内容再提交一次
+            val lastPutDayFileName = "${androidId}_AM_${lastPutDay}.txt"
+            val lastPutDayFile =  File(context.filesDir, lastPutDayFileName)
+            if (lastPutDayFile.exists()) {
+                try {
+                    handler.put(getWebDavPath(lastPutDayFileName), lastPutDayFile.readBytes(),)
+                } catch (e: Exception) {
+                    Log.e("WebDavRssService","update file err:" + lastPutDayFileName, e)
+                }
+            }
+            updateStoreTime(LAST_PUT_DAY, todayStart)
+        }
+
+        if (forcePut || current - lastPutTime >= PUT_INTERVAL_MILLIS) {
+            try {
+                handler.put(getWebDavPath(fileName), file.readBytes())
+                lastPutTime = current
+                needPutCount.value = 0
+            } catch (e: Exception) {
+                Log.e("WebDavRssService","update file err:" + fileName, e)
+            }
+        } else {
+            needPutCount.value += androidId.length;
+        }
+    }
+
+
+
 
     override suspend fun syncState(accountId: Int,
                                    feedId: String?,
@@ -204,7 +229,8 @@ constructor(
 //            return
 //        }
 
-        val diffFromWebDav = mutableMapOf<Pair<String, String>, Long>()
+        val parserDiff = mutableMapOf<Pair<String, String>, Long>()
+
         try {
             val handle = getWebDavHandler();
             val resources: List<DavResource> = handle.list(getWebDavPath())
@@ -220,8 +246,8 @@ constructor(
             for (fileName in needReadFileNames) {
                 val diffContent =
                     handle.get(getWebDavPath(fileName)).bufferedReader().use { it.readText() }
-                val parseDiff = parseDiffContent(diffContent, lastPutTime - PUT_INTERVAL_MILLIS)
-                diffFromWebDav.putAll(parseDiff)
+                val parseResult = parseDiffContent(diffContent, lastPullTime - PUT_INTERVAL_MILLIS * 2)
+                parserDiff.putAll(parseResult)
             }
         } catch (e: Exception) {
             Log.e("WebDavRssService","pull err", e)
@@ -231,11 +257,23 @@ constructor(
         try {
             val updateToRead =  mutableListOf<Pair<String, Long>>()
             val updateToUnRead =  mutableListOf<Pair<String, Long>>()
-            for (entry in diffFromWebDav) {
-                if (entry.key.second == "R") {
-                    updateToRead.add(entry.key.first to entry.value)
-                } else if (entry.key.second == "U") {
-                    updateToUnRead.add(entry.key.first to entry.value)
+            val updateToStar =  mutableListOf<Pair<String, Long>>()
+            val updateToDelete =  mutableListOf<Pair<String, Long>>()
+
+            for (entry in parserDiff) {
+                when (entry.key.second) {
+                    "R" -> {
+                        updateToRead.add(entry.key.first to entry.value)
+                    }
+                    "U" -> {
+                        updateToUnRead.add(entry.key.first to entry.value)
+                    }
+                    "S" -> {
+                        updateToStar.add(entry.key.first to entry.value)
+                    }
+                    "D" -> {
+                        updateToDelete.add(entry.key.first to entry.value)
+                    }
                 }
             }
 
@@ -244,6 +282,12 @@ constructor(
             }
             if (updateToUnRead.isNotEmpty()) {
                 articleDao.markAsReadAfterUpdateAt(updateToUnRead, true)
+            }
+            if (updateToStar.isNotEmpty()) {
+                articleDao.markAsStarAfterUpdateAt(updateToStar, true)
+            }
+            if (updateToDelete.isNotEmpty()) {
+                articleDao.markAsStarAfterUpdateAt(updateToStar, false)
             }
 
             // 更新时间
@@ -254,7 +298,8 @@ constructor(
         }
     }
 
-    suspend fun parseDiffContent(text:String, lastPullTime:Long) : MutableMap<Pair<String, String>, Long>{
+    suspend fun parseDiffContent(text:String, lastPullTime:Long) :
+            MutableMap<Pair<String, String>, Long> {
         val result = mutableMapOf<Pair<String, String>, Long>()
 
         // 按行拆分，过滤空行
@@ -270,7 +315,7 @@ constructor(
 
             // 2. 拿到类型 R / U
             val type = rightPart.firstOrNull()?.toString() ?: continue
-            if (type !in listOf("R", "U")) continue
+            if (type !in listOf("R", "U", "S", "D")) continue
 
             // 3. 拿到所有 ID
             val idContent = rightPart.substringAfter(":")
@@ -280,6 +325,7 @@ constructor(
             for (id in idList) {
                 if (id.isNotEmpty() && timeStamp >= lastPullTime) {
                     result[Pair(id, type)] = timeStamp
+
                 }
             }
         }

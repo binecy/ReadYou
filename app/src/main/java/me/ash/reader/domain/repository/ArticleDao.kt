@@ -660,13 +660,13 @@ interface ArticleDao {
         """
         SELECT * from article 
         WHERE link in (:linkList)
-        AND feedId = :feedId
+        -- AND feedId = :feedId
         AND accountId = :accountId
         """
     )
     suspend fun queryArticlesByLinks(
         linkList: List<String>,
-        feedId: String,
+//        feedId: String,
         accountId: Int,
     ): List<Article>
 
@@ -918,9 +918,10 @@ interface ArticleDao {
     suspend fun insertListIfNotExist(articles: List<Article>, feed: Feed): List<Article> {
         if (articles.isEmpty()) return articles
 
+        // webDava账号下，如果不同的feed有相同link的文章，就会id重复。
         val existingArticles = queryArticlesByLinks(
             linkList = articles.map { it.link },
-            feedId = feed.id,
+//            feedId = feed.id,
             accountId = feed.accountId
         ).associateBy { it.link }
 
@@ -934,6 +935,22 @@ interface ArticleDao {
         list: List<Pair<String, Long>>,
         isUnread: Boolean
     ) {
+        val updateField = "UPDATE article SET isUnread = ?"
+        updateStatusAfterUpdateAt(updateField, list, isUnread)
+    }
+
+    suspend fun markAsStarAfterUpdateAt(
+        list: List<Pair<String, Long>>,
+        isStar: Boolean
+    ) {
+        val updateField = "UPDATE article SET isStarred = :isStarred"
+        updateStatusAfterUpdateAt(updateField, list, isStar)
+    }
+
+    suspend fun updateStatusAfterUpdateAt(
+        updateField:String,
+        list: List<Pair<String, Long>>,
+        status: Boolean) {
         val args = mutableListOf<Any>()
         val conditions = list.joinToString(" OR ") {
             args.add(it.first)
@@ -941,11 +958,11 @@ interface ArticleDao {
             "(id = ? AND (isUnreadUpdateAt < ? or isUnreadUpdateAt is null))"
         }
 
-        val sql = "UPDATE article SET isUnread = ? WHERE $conditions"
+        val sql = "$updateField WHERE $conditions"
 
         // 组装参数（先放更新值，再放条件参数）
         val finalArgs = arrayOfNulls<Any>(args.size + 1)
-        finalArgs[0] = isUnread
+        finalArgs[0] = status
         for (i in args.indices) {
             finalArgs[i + 1] = args[i]
         }

@@ -137,6 +137,7 @@ fun FeedsPage(
     val syncingState = rememberPullToRefreshState()
     val syncingScope = rememberCoroutineScope()
     val doSync: () -> Unit = {
+        // 下拉更新所有定义源
         isSyncing = true
         syncingScope.launch { feedsViewModel.sync() }
     }

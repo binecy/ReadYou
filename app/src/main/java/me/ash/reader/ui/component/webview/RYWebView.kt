@@ -104,8 +104,18 @@ fun RYWebView(
                 Log.i("RLog", "readingFont: ${context.filesDir.absolutePath}")
                 Log.i("RLog", "CustomWebView: ${content}")
                 settings.defaultFontSize = fontSize
+
+                // 解决bilibili，bohaishibei图片加载失败问题
+                var refererDomain2: String? = null
+                if (refererDomain?.contains("www.bohaishibei.com") == true) {
+                    refererDomain2 = "https://www.bohaishibei.com/"
+                }
+                Log.i("RLog", "refererDomain: ${refererDomain2}")
+
+
+
                 loadDataWithBaseURL(
-                    null,
+                    refererDomain2,
                     WebViewHtml.HTML.format(
                         WebViewStyle.get(
                             fontSize = fontSize,

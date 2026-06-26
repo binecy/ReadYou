@@ -936,26 +936,28 @@ interface ArticleDao {
         isUnread: Boolean
     ) {
         val updateField = "UPDATE article SET isUnread = ?"
-        updateStatusAfterUpdateAt(updateField, list, isUnread)
+        updateStatusAfterUpdateAt(updateField, "isUnreadUpdateAt", list, isUnread)
     }
 
     suspend fun markAsStarAfterUpdateAt(
         list: List<Pair<String, Long>>,
         isStar: Boolean
     ) {
-        val updateField = "UPDATE article SET isStarred = :isStarred"
-        updateStatusAfterUpdateAt(updateField, list, isStar)
+        val updateField = "UPDATE article SET isStarred = ?"
+        updateStatusAfterUpdateAt(updateField, "isStarredUpdateAt", list, isStar)
     }
 
     suspend fun updateStatusAfterUpdateAt(
         updateField:String,
+        conditionField:String,
         list: List<Pair<String, Long>>,
         status: Boolean) {
+        // isUnreadUpdateAt/isStarredUpdateAt只要当前机器修改时才更新，同步其他机器的数据时不更新
         val args = mutableListOf<Any>()
         val conditions = list.joinToString(" OR ") {
             args.add(it.first)
             args.add(it.second)
-            "(id = ? AND (isUnreadUpdateAt < ? or isUnreadUpdateAt is null))"
+            "(id = ? AND ($conditionField < ? or $conditionField is null))"
         }
 
         val sql = "$updateField WHERE $conditions"

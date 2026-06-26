@@ -197,19 +197,19 @@ constructor(
                     Log.e("WebDavRssService","update file err:" + lastPutDayFileName, e)
                 }
             }
-            updateStoreTime(LAST_PUT_DAY, todayStart)
         }
 
-        if (forcePut || current - lastPutTime >= PUT_INTERVAL_MILLIS) {
+        if ( (forcePut || current - lastPutTime >= PUT_INTERVAL_MILLIS) && file.exists()) {
             try {
                 handler.put(getWebDavPath(fileName), file.readBytes())
                 lastPutTime = current
                 needPutCount.value = 0
+                updateStoreTime(LAST_PUT_DAY, todayStart)
             } catch (e: Exception) {
                 Log.e("WebDavRssService","update file err:" + fileName, e)
             }
         } else {
-            needPutCount.value += androidId.length;
+            needPutCount.value += 1;
         }
     }
 

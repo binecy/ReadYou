@@ -61,7 +61,7 @@ object WebViewLayout {
                 }
             }
 
-            // 支持b站视频最大化播放
+            // 支持bilibili视频最大化播放
             webChromeClient = object : WebChromeClient() {
                 private var fullscreenView: View? = null
                 private var fullscreenContainer:  ViewGroup? = null

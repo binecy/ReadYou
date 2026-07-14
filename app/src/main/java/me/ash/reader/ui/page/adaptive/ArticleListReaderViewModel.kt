@@ -32,6 +32,7 @@ import me.ash.reader.domain.data.GroupWithFeedsListUseCase
 import me.ash.reader.domain.data.PagerData
 import me.ash.reader.domain.model.article.Article
 import me.ash.reader.domain.model.article.ArticleFlowItem
+import me.ash.reader.domain.model.article.ArticleMark
 import me.ash.reader.domain.model.article.ArticleWithFeed
 import me.ash.reader.domain.model.feed.Feed
 import me.ash.reader.domain.model.general.MarkAsReadConditions
@@ -328,6 +329,7 @@ constructor(
                     readerCacheHelper.readFullContent(articleWithFeed.article.id).getOrNull()
                 if (fullContent != null) ReaderState.FullContent(fullContent)
                 else {
+                    // 加载全文内容
                     renderFullContent()
                     ReaderState.Loading
                 }
@@ -384,6 +386,35 @@ constructor(
             _readingUiState.update { it.copy(isStarred = isStarred) }
             currentArticle?.let {
                 rssService.get().markAsStarred(articleId = it.id, isStarred = isStarred)
+            }
+        }
+    }
+
+    fun saveArticleMark(am: ArticleMark) {
+        applicationScope.launch(ioDispatcher) {
+            currentArticle?.let {
+                // 设置为收藏
+                rssService.get().markAsStarred(articleId = it.id, isStarred = true)
+
+                val newMark = am.copy(articleId = it.id)
+                rssService.get().saveArticleMark(newMark)
+            }
+        }
+    }
+
+    fun deleteArticleMark(markId:String) {
+        applicationScope.launch(ioDispatcher) {
+            currentArticle?.let {
+                rssService.get().deleteArticleMark(markId)
+            }
+        }
+    }
+
+    fun queryArticleMark(callback: (List<ArticleMark>?) -> Unit) {
+        applicationScope.launch(ioDispatcher) {
+            currentArticle?.let {
+                val result = rssService.get().queryArticleMark(it.id)
+                callback(result)
             }
         }
     }

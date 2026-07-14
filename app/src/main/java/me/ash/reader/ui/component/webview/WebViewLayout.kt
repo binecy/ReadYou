@@ -9,6 +9,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import me.ash.reader.infrastructure.preference.ReadingFontsPreference
+import me.ash.reader.ui.page.adaptive.ArticleListReaderViewModel
 
 object WebViewLayout {
 
@@ -18,9 +19,13 @@ object WebViewLayout {
         readingFontsPreference: ReadingFontsPreference,
         webViewClient: WebViewClient,
         onImageClick: ((imgUrl: String, altText: String) -> Unit)? = null,
+        viewModel: ArticleListReaderViewModel? = null,
     ) =
-        WebView(context).apply {
-            this.webViewClient = webViewClient
+        //  WebView(context).apply {
+        CustomMenuWebView(context,  viewModel, webViewClient).apply {
+//            CustomMenuWebView里面已经设置了webViewClient
+//            this.webViewClient = webViewClient
+
             scrollBarSize = 0
             isHorizontalScrollBarEnabled = false
             isVerticalScrollBarEnabled = true

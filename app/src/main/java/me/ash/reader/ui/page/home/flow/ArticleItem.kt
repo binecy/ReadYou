@@ -22,10 +22,12 @@ import androidx.compose.material.icons.outlined.FiberManualRecord
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.CheckCircleOutline
 import androidx.compose.material.icons.rounded.FiberManualRecord
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material3.Badge
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -42,11 +44,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
@@ -92,6 +96,7 @@ fun ArticleItem(
     isUnread: Boolean = articleWithFeed.article.isUnread,
     onClick: (ArticleWithFeed) -> Unit = {},
     onLongClick: (() -> Unit)? = null,
+    markCount: Int? = 0,
 ) {
     val feed = articleWithFeed.feed
     val article = articleWithFeed.article
@@ -108,6 +113,7 @@ fun ArticleItem(
         isUnread = isUnread,
         onClick = { onClick(articleWithFeed) },
         onLongClick = onLongClick,
+        markCount = markCount
     )
 }
 
@@ -125,6 +131,7 @@ fun ArticleItem(
     isUnread: Boolean = false,
     onClick: () -> Unit = {},
     onLongClick: (() -> Unit)? = null,
+    markCount: Int? = 0,
 ) {
     val articleListFeedIcon = LocalFlowArticleListFeedIcon.current
     val articleListFeedName = LocalFlowArticleListFeedName.current
@@ -179,7 +186,7 @@ fun ArticleItem(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier) {
                     // Starred
                     if (isStarred) {
-                        StarredIcon()
+                        StarredIcon(markCount = markCount)
                     }
 
                     if (articleListDate.value) {
@@ -206,7 +213,7 @@ fun ArticleItem(
                         )
                         // Starred
                         if (isStarred) {
-                            StarredIcon()
+                            StarredIcon(markCount = markCount)
                         }
                     }
                 }
@@ -243,7 +250,7 @@ fun ArticleItem(
                     )
                     if (!articleListFeedName.value && !articleListDate.value) {
                         if (isStarred) {
-                            StarredIcon()
+                            StarredIcon(markCount = markCount)
                         } else {
                             Spacer(modifier = Modifier.width(16.dp))
                         }
@@ -291,18 +298,45 @@ fun ArticleItem(
 }
 
 @Composable
-fun StarredIcon(modifier: Modifier = Modifier) {
+fun StarredIcon(modifier: Modifier = Modifier, markCount: Int?) {
     val fontSize = LocalTextStyle.current.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
 
-    Icon(
-        modifier = modifier
-            .size(iconSize)
-            .padding(end = 2.dp),
-        imageVector = Icons.Rounded.Star,
-        contentDescription = stringResource(R.string.starred),
-        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-    )
+    if (markCount == null || markCount == 0) {
+        Icon(
+            modifier = modifier
+                .size(iconSize)
+                .padding(end = 2.dp),
+            imageVector = Icons.Rounded.Star,
+            contentDescription = stringResource(R.string.starred),
+//            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            tint = MaterialTheme.colorScheme.primary,
+        )
+    } else {
+
+        Badge(
+            containerColor = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(end = 2.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.BookmarkBorder,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(iconSize)
+                )
+                Text(
+                    text = if (markCount > 9) "*" else "$markCount",
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 2.dp, end = 2.dp)
+                )
+            }
+        }
+    }
 }
 
 private const val PositionalThresholdFraction = 0.4f
@@ -321,6 +355,7 @@ fun SwipeableArticleItem(
     onMarkAboveAsRead: ((ArticleWithFeed) -> Unit)? = null,
     onMarkBelowAsRead: ((ArticleWithFeed) -> Unit)? = null,
     onShare: ((ArticleWithFeed) -> Unit)? = null,
+    markCount: Int? = 0,
 ) {
 
     var isMenuExpanded by remember { mutableStateOf(false) }
@@ -364,6 +399,7 @@ fun SwipeableArticleItem(
                 isUnread = isUnread,
                 onClick = onClick,
                 onLongClick = onLongClick,
+                markCount = markCount
             )
             with(articleWithFeed.article) {
                 if (isMenuEnabled) {

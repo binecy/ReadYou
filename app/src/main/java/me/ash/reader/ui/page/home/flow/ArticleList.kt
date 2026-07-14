@@ -58,6 +58,7 @@ fun LazyListScope.ArticleList(
                         onMarkBelowAsRead =
                             if (index == pagingItems.itemCount - 1) null else onMarkBelowAsRead,
                         onShare = onShare,
+                        markCount = item.articleWithFeed.markCount
                     )
                 }
 

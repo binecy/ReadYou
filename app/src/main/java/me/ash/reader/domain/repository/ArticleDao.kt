@@ -533,7 +533,8 @@ interface ArticleDao {
         """
         SELECT a.id, a.date, a.title, a.author, a.rawDescription, 
         a.shortDescription, a.fullContent, a.img, a.link, a.feedId, 
-        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt 
+        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt,
+        (SELECT COUNT(1) FROM article_mark WHERE article_mark.articleId = a.id) AS markCount
         FROM article AS a
         LEFT JOIN feed AS b ON b.id = a.feedId
         LEFT JOIN `group` AS c ON c.id = b.groupId
@@ -554,7 +555,8 @@ interface ArticleDao {
         """
         SELECT a.id, a.date, a.title, a.author, a.rawDescription, 
         a.shortDescription, a.fullContent, a.img, a.link, a.feedId, 
-        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt 
+        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt,
+        (SELECT COUNT(1) FROM article_mark WHERE article_mark.articleId = a.id) AS markCount
         FROM article AS a
         LEFT JOIN feed AS b ON b.id = a.feedId
         LEFT JOIN `group` AS c ON c.id = b.groupId
@@ -576,7 +578,8 @@ interface ArticleDao {
         """
         SELECT a.id, a.date, a.title, a.author, a.rawDescription, 
         a.shortDescription, a.fullContent, a.img, a.link, a.feedId, 
-        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt 
+        a.accountId, a.isUnread, a.isStarred, a.isReadLater, a.updateAt,
+        (SELECT COUNT(1) FROM article_mark WHERE article_mark.articleId = a.id) AS markCount
         FROM article AS a
         LEFT JOIN feed AS b ON b.id = a.feedId
         LEFT JOIN `group` AS c ON c.id = b.groupId
@@ -595,7 +598,10 @@ interface ArticleDao {
     @Transaction
     @Query(
         """
-        SELECT * FROM article
+        SELECT 
+            *,
+            (SELECT COUNT(1) FROM article_mark WHERE article_mark.articleId = article.id) AS markCount
+        FROM article
         WHERE feedId = :feedId
         AND accountId = :accountId
         ORDER BY
@@ -610,7 +616,10 @@ interface ArticleDao {
     @Transaction
     @Query(
         """
-        SELECT * from article 
+        SELECT 
+            *,
+            (SELECT COUNT(1) FROM article_mark WHERE article_mark.articleId = article.id) AS markCount
+            from article 
         WHERE feedId = :feedId 
         AND isStarred = :isStarred
         AND accountId = :accountId
@@ -626,7 +635,10 @@ interface ArticleDao {
     @Transaction
     @Query(
         """
-        SELECT * FROM article 
+        SELECT 
+            *,
+            (SELECT COUNT(1) FROM article_mark WHERE article_mark.articleId = article.id) AS markCount
+        FROM article 
         WHERE feedId = :feedId 
         AND isUnread = :isUnread
         AND accountId = :accountId

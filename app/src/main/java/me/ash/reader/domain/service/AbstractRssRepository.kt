@@ -16,11 +16,13 @@ import kotlinx.coroutines.flow.flowOn
 import me.ash.reader.domain.model.account.Account
 import me.ash.reader.domain.model.article.ArchivedArticle
 import me.ash.reader.domain.model.article.Article
+import me.ash.reader.domain.model.article.ArticleMark
 import me.ash.reader.domain.model.article.ArticleWithFeed
 import me.ash.reader.domain.model.feed.Feed
 import me.ash.reader.domain.model.group.Group
 import me.ash.reader.domain.model.group.GroupWithFeed
 import me.ash.reader.domain.repository.ArticleDao
+import me.ash.reader.domain.repository.ArticleMarkDao
 import me.ash.reader.domain.repository.FeedDao
 import me.ash.reader.domain.repository.GroupDao
 import me.ash.reader.infrastructure.android.NotificationHelper
@@ -40,6 +42,7 @@ abstract class AbstractRssRepository(
     private val dispatcherIO: CoroutineDispatcher,
     private val dispatcherDefault: CoroutineDispatcher,
     private val accountService: AccountService,
+    private val articleMarkDao: ArticleMarkDao?=null,
 ) {
 
     open val importSubscription: Boolean = true
@@ -153,6 +156,19 @@ abstract class AbstractRssRepository(
     open suspend fun markAsStarred(articleId: String, isStarred: Boolean) {
         val accountId = accountService.getCurrentAccountId()
         articleDao.markAsStarredByArticleId(accountId, articleId, isStarred)
+    }
+
+    // 查询，保存文章mark数据
+    open suspend fun saveArticleMark(am: ArticleMark) {
+        articleMarkDao?.let { it.insert(am) }
+    }
+
+    open suspend fun queryArticleMark(articleId:String):List<ArticleMark>? {
+        return articleMarkDao?.let { it.queryArticleMark(articleId) }
+    }
+
+    open suspend fun deleteArticleMark(markId:String) {
+        articleMarkDao?.let { it.deleteById(markId) }
     }
 
     suspend fun clearKeepArchivedArticles(): List<Article> {

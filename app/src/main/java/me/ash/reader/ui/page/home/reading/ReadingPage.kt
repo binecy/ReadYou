@@ -266,6 +266,7 @@ fun ReadingPage(
                                                 currentImageData = ImageData(imgUrl, altText)
                                                 showFullScreenImageViewer = true
                                             },
+                                            viewModel = viewModel
                                         )
                                         PullToLoadIndicator(
                                             state = state,

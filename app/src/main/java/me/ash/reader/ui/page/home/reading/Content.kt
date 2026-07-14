@@ -32,6 +32,7 @@ import me.ash.reader.ui.component.scrollbar.drawVerticalScrollIndicator
 import me.ash.reader.ui.component.webview.RYWebView
 import me.ash.reader.ui.ext.extractDomain
 import me.ash.reader.ui.ext.roundClick
+import me.ash.reader.ui.page.adaptive.ArticleListReaderViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -48,6 +49,7 @@ fun Content(
     isLoading: Boolean,
     contentPadding: PaddingValues = PaddingValues(),
     onImageClick: ((imgUrl: String, altText: String) -> Unit)? = null,
+    viewModel: ArticleListReaderViewModel? = null
 ) {
     val context = LocalContext.current
     val subheadUpperCase = LocalReadingSubheadUpperCase.current
@@ -100,6 +102,7 @@ fun Content(
                                 content = content,
                                 refererDomain = link.extractDomain(),
                                 onImageClick = onImageClick,
+                                viewModel = viewModel
                             )
                             Spacer(modifier = Modifier.height(128.dp))
                             Spacer(

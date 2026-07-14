@@ -58,9 +58,14 @@ class WebViewClient(
         return super.shouldInterceptRequest(view, request)
     }
 
+    // 提供给子类扩展
+    var onPageFinishedCallback: ((WebView?, String?) -> Unit)? = null
+
     override fun onPageFinished(view: WebView?, url: String?) {
         super.onPageFinished(view, url)
         view!!.evaluateJavascript(OnImgClickScript, null)
+
+        onPageFinishedCallback?.invoke(view, url)
     }
 
     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {

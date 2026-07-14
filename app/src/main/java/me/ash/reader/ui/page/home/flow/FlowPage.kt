@@ -33,6 +33,8 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.BookmarkBorder
 import androidx.compose.material.icons.rounded.DoneAll
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -377,6 +379,7 @@ fun FlowPage(
                             }
                         },
                         actions = {
+                            // 批量标记已读组件
                             RYExtensibleVisibility(visible = !filterUiState.filter.isStarred()) {
                                 FeedbackIconButton(
                                     imageVector = Icons.Rounded.DoneAll,
@@ -481,6 +484,7 @@ fun FlowPage(
                     BackHandler(markAsRead) { markAsRead = false }
 
                     MarkAsReadBar {
+                        // 批量标记已读未读
                         markAsRead = false
                         viewModel.updateReadStatus(
                             groupId = filterUiState.group?.id,
@@ -674,6 +678,7 @@ fun FlowPage(
                                 articleListTonalElevation = articleListTonalElevation.value,
                                 isSwipeEnabled = { listState.isScrollInProgress },
                                 onClick = { articleWithFeed, index ->
+                                    // 文章点击操作
                                     if (articleWithFeed.feed.isBrowser) {
                                         viewModel.diffMapHolder.updateDiff(
                                             articleWithFeed,

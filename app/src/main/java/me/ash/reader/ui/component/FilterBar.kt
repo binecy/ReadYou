@@ -67,6 +67,7 @@ fun FilterBar(
         ) {
 
             Spacer(modifier = Modifier.width(filterBarPadding))
+            // 文章底部：收藏, 未读, 所有
             Filter.values.forEach { item ->
                 NavigationBarItem(
                     modifier = Modifier.height(containerHeight),

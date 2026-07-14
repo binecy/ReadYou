@@ -19,6 +19,7 @@ import me.ash.reader.domain.model.account.AccountType
 import me.ash.reader.domain.model.feed.Feed
 import me.ash.reader.domain.model.feed.FeedWithArticle
 import me.ash.reader.domain.repository.ArticleDao
+import me.ash.reader.domain.repository.ArticleMarkDao
 import me.ash.reader.domain.repository.FeedDao
 import me.ash.reader.domain.repository.GroupDao
 import me.ash.reader.infrastructure.android.NotificationHelper
@@ -43,6 +44,8 @@ constructor(
     private val workManager: WorkManager,
     private val accountService: AccountService,
     private val syncLogger: SyncLogger,
+
+    private val articleMarkDao: ArticleMarkDao,
 ) :
     AbstractRssRepository(
         articleDao,
@@ -54,6 +57,7 @@ constructor(
         ioDispatcher,
         defaultDispatcher,
         accountService,
+        articleMarkDao
     ) {
 
     override suspend fun sync(

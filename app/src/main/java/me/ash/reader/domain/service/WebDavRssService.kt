@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import me.ash.reader.domain.repository.ArticleMarkDao
 import me.ash.reader.infrastructure.di.ApplicationScope
 import me.ash.reader.ui.ext.dataStore
 import java.io.FileWriter
@@ -61,6 +62,8 @@ constructor(
     private val accountService: AccountService,
     private val syncLogger: SyncLogger,
     @ApplicationScope private val applicationScope: CoroutineScope,
+
+    private val articleMarkDao: ArticleMarkDao,
 ) :
     LocalRssService(
         context,
@@ -73,7 +76,9 @@ constructor(
         defaultDispatcher,
         workManager,
         accountService,
-        syncLogger
+        syncLogger,
+        articleMarkDao,
+
     )  {
     private val PUT_INTERVAL_MILLIS:Long = 1000 * 60 * 5;    // 5 分钟上传一次
     private val PULL_INTERVAL_MILLIS:Long = 1000 * 60 * 30;    // 30 分钟读取一次

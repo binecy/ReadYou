@@ -32,6 +32,7 @@ import me.ash.reader.infrastructure.preference.ReadingFontsPreference
 import me.ash.reader.ui.ext.ExternalFonts
 import me.ash.reader.ui.ext.openURL
 import me.ash.reader.ui.ext.surfaceColorAtElevation
+import me.ash.reader.ui.page.adaptive.ArticleListReaderViewModel
 import me.ash.reader.ui.theme.palette.alwaysLight
 
 @Composable
@@ -40,6 +41,7 @@ fun RYWebView(
     content: String,
     refererDomain: String? = null,
     onImageClick: ((imgUrl: String, altText: String) -> Unit)? = null,
+    viewModel: ArticleListReaderViewModel? = null
 ) {
     val context = LocalContext.current
     val maxWidth = LocalConfiguration.current.screenWidthDp.dp.value
@@ -84,6 +86,7 @@ fun RYWebView(
                             },
                         ),
                     onImageClick = onImageClick,
+                    viewModel = viewModel
                 )
             )
         }

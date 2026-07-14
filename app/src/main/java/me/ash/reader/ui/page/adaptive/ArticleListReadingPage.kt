@@ -169,6 +169,7 @@ fun ArticleListReaderPage(
                         delay(100L)
                         viewModel.clearReadingData()
                     } else {
+                        // 展示文章时准备数据，如加载全文
                         viewModel.initData(
                             articleId = contentKey.articleId,
                             listIndex = contentKey.listIndex,

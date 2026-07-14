@@ -8,19 +8,22 @@ import me.ash.reader.domain.model.account.*
 import me.ash.reader.domain.model.account.security.DESUtils
 import me.ash.reader.domain.model.article.ArchivedArticle
 import me.ash.reader.domain.model.article.Article
+import me.ash.reader.domain.model.article.ArticleMark
 import me.ash.reader.domain.model.feed.Feed
 import me.ash.reader.domain.model.group.Group
 import me.ash.reader.domain.repository.AccountDao
 import me.ash.reader.domain.repository.ArticleDao
+import me.ash.reader.domain.repository.ArticleMarkDao
 import me.ash.reader.domain.repository.FeedDao
 import me.ash.reader.domain.repository.GroupDao
 import me.ash.reader.infrastructure.preference.*
 import me.ash.reader.ui.ext.toInt
 import java.util.*
 
+// 数据库变更
 @Database(
-    entities = [Account::class, Feed::class, Article::class, Group::class, ArchivedArticle::class],
-    version = 8,
+    entities = [Account::class, Feed::class, Article::class, Group::class, ArchivedArticle::class, ArticleMark::class],
+    version = 9,
     autoMigrations = [
         AutoMigration(from = 5, to = 6),
         AutoMigration(from = 5, to = 7),
@@ -42,6 +45,9 @@ abstract class AndroidDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
     abstract fun feedDao(): FeedDao
     abstract fun articleDao(): ArticleDao
+
+    abstract fun articleMarkDao(): ArticleMarkDao
+
     abstract fun groupDao(): GroupDao
 
     companion object {
@@ -80,7 +86,8 @@ val allMigrations = arrayOf(
     MIGRATION_2_3,
     MIGRATION_3_4,
     MIGRATION_4_5,
-    MIGRATION_7_8
+    MIGRATION_7_8,
+    MIGRATION_8_9,
 )
 
 @Suppress("ClassName")
@@ -167,5 +174,28 @@ object MIGRATION_7_8 : Migration(7, 8) {
     override fun migrate(database: SupportSQLiteDatabase) {
         database.execSQL("ALTER TABLE article ADD COLUMN isUnreadUpdateAt INTEGER")
         database.execSQL("ALTER TABLE article ADD COLUMN isStarredUpdateAt INTEGER")
+    }
+}
+
+@Suppress("ClassName")
+object MIGRATION_8_9 : Migration(8, 9) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        // 创建 article_mark 表
+        database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `article_mark` (
+                        `id` TEXT NOT NULL PRIMARY KEY,
+                        `articleId` TEXT NOT NULL,
+                        `date` INTEGER NOT NULL,
+                        `markText` TEXT NOT NULL,
+                        `markTextJson` TEXT NOT NULL,
+                        `idea` TEXT
+                    )
+                """.trimIndent())
+
+        // 创建索引
+        database.execSQL("""
+                    CREATE INDEX IF NOT EXISTS `index_article_mark_articleId` 
+                    ON `article_mark` (`articleId`)
+                """.trimIndent())
     }
 }
